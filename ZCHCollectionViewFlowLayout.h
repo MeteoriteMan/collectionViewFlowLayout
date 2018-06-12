@@ -10,4 +10,16 @@
 
 @interface ZCHCollectionViewFlowLayout : UICollectionViewFlowLayout
 
+//
+@property (nonatomic ,assign) CGFloat sectionIntervalTop;
+
+//
+@property (nonatomic ,assign) CGFloat sectionIntervalBottom;
+
+//
+@property (nonatomic ,assign) CGFloat sectionIntervalLeft;
+
+//
+@property (nonatomic ,assign) CGFloat sectionIntervalRight;
+
 @end

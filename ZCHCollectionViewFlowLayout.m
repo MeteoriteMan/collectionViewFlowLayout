@@ -52,7 +52,7 @@
 
     //拿到cell的个数
     for (NSInteger section = 0; section < self.collectionView.numberOfSections; section++) {
-        NSInteger rows = [self.collectionView numberOfItemsInSection:0];
+        NSInteger rows = [self.collectionView numberOfItemsInSection:section];
         for (int i = 0; i < rows; i++) {//拿到每个cell的属性
             NSIndexPath *indexPath = [NSIndexPath indexPathForItem:i inSection:section];
             //获取对应indexPath的cell对应的布局的属性
@@ -62,7 +62,7 @@
         }
     }
     //布局ReusableView
-    for (NSInteger section = 0; section < self.collectionView.numberOfSections; section ++) {
+    for (NSInteger section = 0; section < self.collectionView.numberOfSections; section++) {
         NSIndexPath *indexPath = [NSIndexPath indexPathForRow:0 inSection:section];
         UICollectionViewLayoutAttributes *reusableViewHeaderAttributes = [self layoutAttributesForSupplementaryViewOfKind:UICollectionElementKindSectionHeader atIndexPath:indexPath];
         if (reusableViewHeaderAttributes != nil) {
@@ -80,14 +80,14 @@
     [super layoutAttributesForElementsInRect:rect];
 //    self.ZCHItemAttributesArray ,self.ZCHReusableHeaderViewAttributesArray ,self.ZCHReusableFooterViewAttributesArray
     NSMutableArray *arrayM = [NSMutableArray array];
+    if (self.ZCHItemAttributesArray.count != 0) {
+        [arrayM addObjectsFromArray:self.ZCHItemAttributesArray];
+    }
     if (self.ZCHReusableHeaderViewAttributesArray.count != 0) {
         [arrayM addObjectsFromArray:self.ZCHReusableHeaderViewAttributesArray];
     }
     if (self.ZCHReusableFooterViewAttributesArray.count != 0) {
         [arrayM addObjectsFromArray:self.ZCHReusableFooterViewAttributesArray];
-    }
-    if (self.ZCHItemAttributesArray.count != 0) {
-        [arrayM addObjectsFromArray:self.ZCHItemAttributesArray];
     }
 
     return arrayM.copy;
@@ -110,20 +110,27 @@
     width = oldAttributes.frame.size.width;
     height = oldAttributes.frame.size.height;
 
+
+    ///装饰视图高度
+    UICollectionViewLayoutAttributes *oldElementKindSectionHeaderAttributes = [super layoutAttributesForSupplementaryViewOfKind:UICollectionElementKindSectionHeader atIndexPath:indexPath];
+    UICollectionViewLayoutAttributes *oldElementKindSectionFooterAttributes = [super layoutAttributesForSupplementaryViewOfKind:UICollectionElementKindSectionFooter atIndexPath:indexPath];
+
 //    CGFloat headerX = 0.0;
 //    CGFloat footerX = 0.0;
 //    CGFloat headerY = 0.0;
 //    CGFloat footerY = 0.0;
     CGFloat ReusableViewHeight = 0.0;
     CGFloat ReusableViewWidth = 0.0;
-    if (self.scrollDirection == UICollectionViewScrollDirectionHorizontal) {//横向排布
+    if (self.scrollDirection == UICollectionViewScrollDirectionVertical) {//横向排布
 //        headerX = _sectionIntervalTop;
 //        footerX = _sectionIntervalBottom;
-        ReusableViewHeight = self.headerReferenceSize.height;
+//        ReusableViewHeight = self.headerReferenceSize.height;
+        ReusableViewHeight = oldElementKindSectionHeaderAttributes.frame.size.height;
     } else {
 //        headerY = _sectionIntervalTop;
 //        footerY = _sectionIntervalBottom;
-        ReusableViewWidth = self.headerReferenceSize.width;
+//        ReusableViewWidth = self.headerReferenceSize.width;
+        ReusableViewWidth = oldElementKindSectionHeaderAttributes.frame.size.width;
     }
     
     //处理是否添加组头高度
@@ -137,10 +144,11 @@
             self.itemLastY = self.itemLastY + self.sectionInset.bottom + self.minimumLineSpacing + height;
         } else {//section == 0
             self.itemLastY += _sectionIntervalTop;
+
         }
     }
 
-    if (self.scrollDirection == UICollectionViewScrollDirectionHorizontal) {//横向排布
+    if (self.scrollDirection == UICollectionViewScrollDirectionVertical) {//横向排布
         //获取x,y的大小,y的位置需要判断X是否超出屏幕
         x = indexPath.row == 0 ? self.sectionInset.left + _sectionIntervalLeft : self.itemLastX + self.minimumInteritemSpacing + self.sectionInset.right;
         if (x + width > self.collectionView.bounds.size.width - self.sectionInset.right - _sectionIntervalRight) {//如果x+width超出屏幕范围,则y要下移
@@ -181,7 +189,7 @@
     self.itemLastHeight = height;
     
     if (indexPath.row == [self.collectionView numberOfItemsInSection:indexPath.section] - 1) {//如果是最后一个Row.改变lastY
-        self.itemLastY = self.itemLastY + _sectionIntervalBottom + self.footerReferenceSize.height;
+        self.itemLastY = self.itemLastY + _sectionIntervalBottom + oldElementKindSectionFooterAttributes.frame.size.height;
     }
 
     return newAttributes;
@@ -216,18 +224,19 @@
         } else {
             for (UICollectionViewLayoutAttributes *attributes in self.ZCHItemAttributesArray) {
                 if (attributes.indexPath.row == [self.collectionView numberOfItemsInSection:indexPath.section - 1] - 1 && attributes.indexPath.section == indexPath.section - 1) {//上面一组的最后一个
-                    y = attributes.frame.origin.y + attributes.frame.size.height + self.sectionInset.bottom;
+                    y = attributes.frame.origin.y + attributes.frame.size.height + self.sectionInset.bottom + [UICollectionViewLayoutAttributes layoutAttributesForSupplementaryViewOfKind:UICollectionElementKindSectionFooter withIndexPath:[NSIndexPath indexPathForRow:0 inSection:indexPath.section - 1]].frame.size.height;
                     NSLog(@"%lf",y);
                     if (indexPath.section != 0) {
-                        y = y + self.footerReferenceSize.height + _sectionIntervalBottom;
+                        y = y + _sectionIntervalBottom;
                     }
                 }
                 
             }
         }
-        if (self.scrollDirection == UICollectionViewScrollDirectionHorizontal) {
+        if (self.scrollDirection == UICollectionViewScrollDirectionVertical) {
             width = self.collectionView.bounds.size.width;
-            height = self.headerReferenceSize.height;
+//            height = self.headerReferenceSize.height;
+            height = oldAttributes.frame.size.height;
         } else {
             
         }
@@ -241,9 +250,10 @@
                 }
             }
         }
-        if (self.scrollDirection == UICollectionViewScrollDirectionHorizontal) {
+        if (self.scrollDirection == UICollectionViewScrollDirectionVertical) {
             width = self.collectionView.bounds.size.width;
-            height = self.footerReferenceSize.height;
+//            height = self.footerReferenceSize.height;
+            height = oldAttributes.frame.size.height;
         } else {
 
         }
@@ -258,8 +268,16 @@
 //    }
 //    else {//水平布局
 //        return CGSizeMake(self.collectionView.bounds.size.width, self.ZCHItemAttributesArray.lastObject.frame.origin.y + self.ZCHItemAttributesArray.lastObject.frame.size.height + _sectionIntervalBottom + self.footerReferenceSize.height + self.footerReferenceSize.height + self.sectionInset.top + self.sectionInset.bottom);
-    return CGSizeMake(self.collectionView.bounds.size.width, self.ZCHReusableFooterViewAttributesArray.lastObject.frame.origin.y + self.ZCHReusableFooterViewAttributesArray.lastObject.frame.size.height);
+    CGFloat height = self.ZCHReusableFooterViewAttributesArray.lastObject.frame.origin.y + self.ZCHReusableFooterViewAttributesArray.lastObject.frame.size.height;
+    if (height < self.collectionView.bounds.size.height) {
+        height = self.collectionView.bounds.size.height + 1;
+    }
+    return CGSizeMake(self.collectionView.bounds.size.width, height);
 //    }
+}
+
+- (BOOL)shouldInvalidateLayoutForBoundsChange:(CGRect)newBounds {
+    return YES;
 }
 
 @end

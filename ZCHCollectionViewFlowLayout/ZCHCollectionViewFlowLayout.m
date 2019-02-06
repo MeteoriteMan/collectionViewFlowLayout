@@ -36,7 +36,7 @@
 - (void)prepareLayout {//准备布局
     [super prepareLayout];
     self.itemSize = CGSizeMake(10, 10);
-    self.estimatedItemSize = CGSizeMake(10, 10);
+    self.estimatedItemSize = CGSizeMake(100, 100);
 
     //初始化
     _ZCHItemAttributesArray = [NSMutableArray array];
@@ -51,7 +51,8 @@
     _currentSection = -1;
 
     //拿到cell的个数
-    for (NSInteger section = 0; section < self.collectionView.numberOfSections; section++) {
+    NSInteger sections = self.collectionView.numberOfSections;
+    for (NSInteger section = 0; section < sections; section++) {
         NSInteger rows = [self.collectionView numberOfItemsInSection:section];
         for (int i = 0; i < rows; i++) {//拿到每个cell的属性
             NSIndexPath *indexPath = [NSIndexPath indexPathForItem:i inSection:section];
@@ -62,7 +63,7 @@
         }
     }
     //布局ReusableView
-    for (NSInteger section = 0; section < self.collectionView.numberOfSections; section++) {
+    for (NSInteger section = 0; section < sections; section++) {
         NSIndexPath *indexPath = [NSIndexPath indexPathForRow:0 inSection:section];
         UICollectionViewLayoutAttributes *reusableViewHeaderAttributes = [self layoutAttributesForSupplementaryViewOfKind:UICollectionElementKindSectionHeader atIndexPath:indexPath];
         if (reusableViewHeaderAttributes != nil) {
@@ -97,9 +98,8 @@
 - (UICollectionViewLayoutAttributes *)layoutAttributesForItemAtIndexPath:(NSIndexPath *)indexPath {
     //旧的布局属性
     UICollectionViewLayoutAttributes *oldAttributes = [super layoutAttributesForItemAtIndexPath:indexPath];
-//    NSLog(@"%@",@(oldAttributes.frame));
     //创建布局属性
-    UICollectionViewLayoutAttributes *newAttributes = [UICollectionViewLayoutAttributes layoutAttributesForCellWithIndexPath:indexPath];
+    UICollectionViewLayoutAttributes *newAttributes = [super layoutAttributesForItemAtIndexPath:indexPath];
     //准备获取cell的fram;
     CGFloat width;
     CGFloat height;
@@ -268,12 +268,28 @@
 //    }
 //    else {//水平布局
 //        return CGSizeMake(self.collectionView.bounds.size.width, self.ZCHItemAttributesArray.lastObject.frame.origin.y + self.ZCHItemAttributesArray.lastObject.frame.size.height + _sectionIntervalBottom + self.footerReferenceSize.height + self.footerReferenceSize.height + self.sectionInset.top + self.sectionInset.bottom);
-    CGFloat height = self.ZCHReusableFooterViewAttributesArray.lastObject.frame.origin.y + self.ZCHReusableFooterViewAttributesArray.lastObject.frame.size.height;
+//    };
+    // MARK: 1.Header
+    CGFloat heightHeader = self.ZCHReusableHeaderViewAttributesArray.lastObject.frame.origin.y + self.ZCHReusableHeaderViewAttributesArray.lastObject.frame.size.height;
+    // MARK: 2.Item
+    CGFloat heightItem = self.ZCHItemAttributesArray.lastObject.frame.origin.y +
+    self.ZCHItemAttributesArray.lastObject.frame.size.height;
+    // MARK: 3.Footer.
+    CGFloat heightFooter = self.ZCHReusableFooterViewAttributesArray.lastObject.frame.origin.y +
+    self.ZCHReusableFooterViewAttributesArray.lastObject.frame.size.height;
+
+    CGFloat height = heightHeader;
+    if (heightItem > height) {
+        height = heightItem;
+    }
+    if (heightFooter > height) {
+        height = heightFooter;
+    }
+
     if (height < self.collectionView.bounds.size.height) {
         height = self.collectionView.bounds.size.height + 1;
     }
     return CGSizeMake(self.collectionView.bounds.size.width, height);
-//    }
 }
 
 - (BOOL)shouldInvalidateLayoutForBoundsChange:(CGRect)newBounds {
